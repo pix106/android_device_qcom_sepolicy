@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016, 2018 The Linux Foundation. All rights reserved.
+# Copyright (c) 2017, 2021, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -25,22 +25,24 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-get_prop(vendor_dataservice_app, vendor_cnd_vendor_prop)
+# Allow update_engine and update_engine_sideload (recovery) read/write on the
+# device-specific partitions it should update.
+allow update_engine_common {
+	custom_ab_block_device
+	xbl_block_device
+	ssd_device
+	modem_block_device
+	root_block_device
+	system_block_device
+	boot_block_device
+	mdtp_device
+        recovery_block_device
+}:blk_file rw_file_perms;
 
-allow vendor_dataservice_app sysfs_data:file r_file_perms;
+allow update_engine_common tmpfs:lnk_file r_file_perms;
+allow update_engine_common metadata_file:dir search;
+allow update_engine_common {adsprpcd_file firmware_file}:dir search;
+allow update_engine_common {bt_firmware_file firmware_file}:filesystem getattr;
 
-userdebug_or_eng(`
-  diag_use(vendor_dataservice_app)
-')
+dontaudit update_engine_common self:capability {dac_read_search dac_override};
 
-allow vendor_dataservice_app hal_datafactory_hwservice:hwservice_manager find;
-binder_call(vendor_dataservice_app, cnd)
-
-allow vendor_dataservice_app hal_imsrcsd_hwservice:hwservice_manager find;
-binder_call(vendor_dataservice_app, hal_rcsservice)
-
-r_dir_file(vendor_dataservice_app, cnd_data_file)
-
-allow vendor_dataservice_app app_api_service:service_manager find;
-allow vendor_dataservice_app hal_perf_hwservice:hwservice_manager find;
-binder_call(vendor_dataservice_app, hal_perf_default)
